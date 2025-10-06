@@ -49,16 +49,16 @@ from ..agents.definitions.meeting_agents import (
     StandupSummaryWriter
 )
 from sentientresearchagent.hierarchical_agent_framework.context.agent_io_models import (
-    PlanOutput, AtomizerOutput, WebSearchResultsOutput, 
+    PlanOutput, AtomizerOutput, WebSearchResultsOutput,
     CustomSearcherOutput, PlanModifierInput
 )
 from ..types import TaskType
 from sentientresearchagent.hierarchical_agent_framework.agents.base_adapter import BaseAdapter
 from sentientresearchagent.hierarchical_agent_framework.agents.registry import AgentRegistry
 from sentientresearchagent.hierarchical_agent_framework.agent_blueprints import AgentBlueprint
-from sentientresearchagent.hierarchical_agent_framework.toolkits.data import BinanceToolkit, CoinGeckoToolkit, ArkhamToolkit, DefiLlamaToolkit
+# Crypto toolkits removed - not needed for Sentune (MeetingGenius)
 from .models import (
-    AgentConfig, ModelConfig, ToolConfig, ToolkitConfig, 
+    AgentConfig, ModelConfig, ToolConfig, ToolkitConfig,
     validate_agent_config, validate_toolkit_config
 )
 
@@ -131,14 +131,9 @@ class AgentFactory:
             "CustomSearcherOutput": CustomSearcherOutput,
             # Add more as needed
         }
-        
-        # Custom toolkits (our own implementations)
-        self._toolkits = {
-            "BinanceToolkit": BinanceToolkit,
-            "CoingeckoToolkit": CoinGeckoToolkit,
-            "ArkhamToolkit": ArkhamToolkit,
-            "DefiLlamaToolkit": DefiLlamaToolkit,
-        }
+
+        # Custom toolkits (Sentune: crypto toolkits removed)
+        self._toolkits = {}
 
         # Initialize tools mapping for individual tools (not toolkits)
         self._tools = {}
