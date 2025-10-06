@@ -573,6 +573,48 @@ Write the email:"""
 
 
 # ============================================================================
+# INTERVIEW/PODCAST EXTRACTION PROMPTS (for testing with Ronaldo podcast)
+# ============================================================================
+
+INSIGHTS_EXTRACTION_PROMPT = """Extract KEY INSIGHTS from this interview/podcast transcript.
+
+An insight is:
+- Philosophy or principle shared
+- Methodology or approach explained
+- Personal experience or lesson learned
+- Advice or recommendation given
+- Surprising or counter-intuitive fact
+
+TRANSCRIPT:
+{transcript}
+
+For EACH insight extract:
+1. **category**: Type (philosophy/methodology/advice/experience/fact)
+2. **insight**: The main insight (1-2 sentences)
+3. **quote**: Exact quote from transcript (if applicable)
+4. **speaker**: Who shared this insight
+5. **context**: Additional context or explanation
+6. **importance**: "high" | "medium" | "low"
+
+Focus on ACTIONABLE insights (things audience can learn/apply).
+
+Return JSON:
+{{
+  "insights": [
+    {{
+      "category": "philosophy",
+      "insight": "Talent and hard work must combine for sustained excellence",
+      "quote": "Talent without work is nothing, and work without talent is nothing, too",
+      "speaker": "Cristiano Ronaldo",
+      "context": "Discussing what made him successful for 20 years at the top",
+      "importance": "high"
+    }}
+  ],
+  "total_insights": 8
+}}"""
+
+
+# ============================================================================
 # HELPER PROMPTS
 # ============================================================================
 

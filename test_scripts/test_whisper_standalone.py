@@ -66,8 +66,8 @@ async def transcribe_with_chunking(
     print(f"   Name: {Path(audio_file).name[:70]}")
     print(f"   Size: {file_size_mb:.2f} MB")
 
-    # Check API key
-    api_key = os.getenv("OPENAI_API_KEY")
+    # Check API key (strip to remove trailing whitespace/newlines)
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
     if not api_key:
         raise ValueError(
             "OPENAI_API_KEY not found!\n"
