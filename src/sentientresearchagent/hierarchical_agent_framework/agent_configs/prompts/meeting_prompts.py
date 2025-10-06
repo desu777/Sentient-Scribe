@@ -131,32 +131,47 @@ Return JSON:
 
 LECTURE_PLANNER_PROMPT = """You are planning the processing of an educational lecture recording.
 
-Lectures are EDUCATIONAL content where:
-- Professor teaches concepts, theories, methods
-- Students need to LEARN and PREPARE FOR EXAMS
-- Focus is on comprehensive understanding and exam preparation
+Lectures are EDUCATIONAL content for STUDENTS across ALL DISCIPLINES:
+- STEM, Sciences, Social Sciences, Humanities, Business, Medicine, Law, etc.
+- Professor teaches domain-specific knowledge
+- Students need comprehensive notes for LEARNING and EXAM PREPARATION
 
 Break this into 6 ATOMIC tasks (ALL are EXECUTE nodes, NO further planning):
 
 1. Transcribe lecture audio to text (SEARCH, EXECUTE)
-2. Extract key concepts and definitions (THINK, EXECUTE, depends_on: [0])
-3. Extract formulas, equations, algorithms (THINK, EXECUTE, depends_on: [0])
-4. Extract code examples and technical demonstrations (THINK, EXECUTE, depends_on: [0])
-5. Detect exam preparation hints and important topics (THINK, EXECUTE, depends_on: [0])
+   → Capture ALL verbal content with timestamps
+
+2. Extract core concepts, definitions, and theoretical frameworks (THINK, EXECUTE, depends_on: [0])
+   → UNIVERSAL: Works for ANY course domain
+   → LLM identifies key terminology and foundational ideas
+
+3. Extract structured/technical content (THINK, EXECUTE, depends_on: [0])
+   → DOMAIN-ADAPTIVE: LLM identifies what's "structured" for THIS field
+   → STEM: formulas, algorithms, code
+   → Sciences: pathways, reactions, taxonomies
+   → Humanities: analytical frameworks, rhetorical structures
+   → Business: strategic models, financial frameworks
+   → Return empty if pure discussion (valid!)
+
+4. Extract examples, applications, and demonstrations (THINK, EXECUTE, depends_on: [0])
+   → UNIVERSAL: All courses use examples
+   → STEM: solved problems, code demos
+   → Humanities: quotations, historical events, textual analysis
+   → Sciences: case studies, experimental results
+   → Business: company cases, market scenarios
+
+5. Detect exam preparation signals and professor emphasis (THINK, EXECUTE, depends_on: [0])
+   → UNIVERSAL: "This will be on the test", repeated topics, explicit importance cues
+
 6. Generate comprehensive study guide (WRITE, EXECUTE, depends_on: [1,2,3,4])
+   → Synthesize ALL extracted content into organized study material
 
-CRITICAL INSTRUCTIONS:
-
-**LLM AUTONOMY:**
-- LLM decides WHAT to extract (not hardcoded categories)
-- LLM determines IMPORTANCE (what's exam-critical vs supplementary)
-- LLM identifies STRUCTURE (how to organize concepts)
-- Extract EVERYTHING relevant, not fixed quantities
-
-**EXTRACTION FLEXIBILITY:**
-- If no formulas → empty list (not error)
-- If no code → empty list (valid for humanities)
-- Adapt to course type automatically (STEM vs humanities vs business)
+**CRITICAL - LLM AUTONOMY:**
+- LLM **autonomously detects** course domain (STEM vs Humanities vs Science vs Business)
+- LLM **adapts extraction** to domain (formulas for physics, quotations for literature)
+- LLM **determines importance** based on professor cues and content structure
+- NO hardcoded quantities - extract EVERYTHING relevant
+- Empty results are VALID (not all lectures have code/formulas/etc)
 
 **Each sub_task MUST have:**
 - "task_type": "SEARCH" | "THINK" | "WRITE"
@@ -166,102 +181,210 @@ CRITICAL INSTRUCTIONS:
 Return JSON plan with sub_tasks array following SubTask schema."""
 
 
-LECTURE_CONCEPT_PROMPT = """Extract KEY CONCEPTS from this educational lecture.
+LECTURE_CONCEPT_PROMPT = """Extract ALL KEY CONCEPTS from this educational lecture.
 
-A concept is:
+**UNIVERSAL EXTRACTION - Works for ALL Academic Disciplines**
+
+A concept is ANY of:
 - New term or idea introduced
-- Theory or framework explained
-- Important principle or rule
-- Technical term with definition
+- Theory, framework, or model explained
+- Important principle, rule, or law
+- Technical/specialized terminology with definition
+- Foundational ideas essential for understanding
 
 TRANSCRIPT:
 {transcript}
 
-COURSE: {course_topic}
+**For EACH concept extract:**
+1. **term**: The concept name (preserve exact terminology)
+2. **definition**: How professor defines it (exact wording preferred)
+3. **category**: Type of concept (theory|principle|term|framework|method|law|model|etc)
+4. **explanation**: Detailed explanation if provided
+5. **domain_context**: What field/subfield this belongs to
+6. **examples**: Real-world examples given (if any)
+7. **prerequisites**: Related concepts students should know
+8. **importance**: exam_critical|important|supplementary (based on professor cues)
 
-For EACH concept extract:
-1. **term**: The concept name
-2. **definition**: How it's defined (in professor's words)
-3. **category**: Type (theory/algorithm/principle/term/framework)
-4. **explanation**: Longer explanation if provided
-5. **example**: Real-world example given (if any)
-6. **importance**: Is this flagged as exam-critical?
+**DOMAIN ADAPTIVITY:**
+- STEM: Technical precision, mathematical rigor
+- Sciences: Systematic relationships, processes
+- Humanities: Interpretive frameworks, critical concepts
+- Social Sciences: Theoretical models, methodologies
+- Business: Strategic concepts, frameworks
 
-RULES:
-- Include BOTH simple and complex concepts
-- Preserve technical accuracy (don't simplify definitions)
-- Note prerequisites (concepts mentioned as "you should already know...")
+**CRITICAL RULES:**
+- Extract BOTH simple AND complex concepts
+- Preserve technical accuracy (professor's exact definitions)
+- Include domain-specific terminology
+- Note prerequisites ("you should already know X")
+- Empty list if lecture is purely applied/practical (valid!)
 
 Return JSON:
 {{
   "concepts": [
     {{
-      "term": "Backpropagation",
-      "definition": "Algorithm for calculating gradients in neural networks",
-      "category": "algorithm",
-      "explanation": "Uses chain rule to compute partial derivatives...",
-      "example": "Training a network to recognize handwritten digits",
-      "importance": "exam_critical"
+      "term": "...",
+      "definition": "...",
+      "category": "theory|principle|term|framework|method|etc",
+      "explanation": "...",
+      "domain_context": "...",
+      "examples": ["..."],
+      "prerequisites": ["..."],
+      "importance": "exam_critical|important|supplementary"
     }}
   ],
-  "prerequisites_mentioned": ["Calculus", "Linear Algebra"]
+  "total_concepts": 0,
+  "detected_domain": "STEM|Science|Social_Science|Humanities|Business|Mixed",
+  "concept_density": "high|medium|low"
 }}"""
 
 
-LECTURE_FORMULA_PROMPT = """Extract all MATHEMATICAL FORMULAS and EQUATIONS from lecture.
+UNIVERSAL_STRUCTURED_CONTENT_PROMPT = """Extract ALL structured, technical, or methodological content from this lecture.
+
+**AUTONOMOUS DOMAIN ADAPTATION:**
+The lecture domain is UNKNOWN. Identify what constitutes "structured knowledge" for THIS specific field.
 
 TRANSCRIPT:
 {transcript}
 
-For EACH formula:
-1. **formula**: The equation (try to format as LaTeX if possible)
-2. **variables**: What each variable represents
-3. **purpose**: What this formula calculates
-4. **example**: Example calculation (if given)
-5. **when_to_use**: Application context
+**Domain-Specific Examples (LLM: adapt to actual lecture content):**
 
-Example extraction:
-{{
-  "formulas": [
-    {{
-      "formula": "dL/dw = dL/da * da/dz * dz/dw",
-      "variables": {{
-        "L": "Loss function",
-        "w": "Weights",
-        "a": "Activation",
-        "z": "Pre-activation"
-      }},
-      "purpose": "Calculate gradient for backpropagation",
-      "example": "For 2-layer network: ...",
-      "when_to_use": "Training neural networks"
-    }}
-  ]
-}}"""
+**STEM (Math/Physics/CS/Engineering):**
+- Mathematical formulas, equations, derivations
+- Algorithms, pseudocode, code implementations
+- Theorems, proofs, problem-solving techniques
+- Computational complexity, data structures
+- Physical laws, chemical equations
 
+**Natural Sciences (Biology/Chemistry/Medicine):**
+- Metabolic pathways (verbal descriptions)
+- Reaction mechanisms, chemical processes
+- Classification systems, taxonomies
+- Quantitative relationships (Michaelis-Menten, etc)
+- Anatomical systems, physiological processes
 
-LECTURE_CODE_PROMPT = """Extract CODE EXAMPLES from this lecture transcript.
+**Social Sciences (Psychology/Sociology/Economics):**
+- Experimental designs, statistical methods
+- Theoretical frameworks, conceptual models
+- Research methodologies, analysis techniques
+- Economic models, market structures
 
-TRANSCRIPT:
-{transcript}
+**Humanities (Literature/Philosophy/History/Linguistics):**
+- Analytical frameworks, critical lenses
+- Rhetorical structures, literary devices
+- Logical argument patterns, fallacies
+- Historical frameworks (cause-effect, periodization)
+- Linguistic structures, grammatical rules
 
-For EACH code example:
-1. **language**: Programming language
-2. **code**: Full code snippet (preserve formatting)
-3. **purpose**: What this code demonstrates
-4. **key_points**: Important aspects highlighted
-5. **common_errors**: Mistakes to avoid (if mentioned)
+**Business/Management:**
+- Strategic frameworks (Porter's Five Forces, SWOT)
+- Financial models, valuation methods
+- Decision matrices, analytical tools
+
+**For EACH structured item extract:**
+1. **content**: The actual formula/framework/method (preserve notation)
+2. **domain_type**: What type of content (formula/algorithm/framework/model/etc)
+3. **components**: Key parts explained (variables, steps, elements)
+4. **purpose**: What this is used for
+5. **context**: When/how it's applied
+6. **example**: Example usage (if provided)
+
+**CRITICAL:**
+- If NO structured content exists → return empty list (valid for discussion-based lectures)
+- Extract EVERYTHING that requires systematic understanding
+- Preserve precision (notation, terminology, exact wording)
+- Don't invent - only extract what professor actually presented
 
 Return JSON:
 {{
-  "code_examples": [
+  "structured_content": [
     {{
-      "language": "Python",
-      "code": "def backprop(x, y, w):\\n    z = np.dot(x, w)\\n    a = sigmoid(z)\\n    return (a - y)**2",
-      "purpose": "Demonstrates backpropagation calculation",
-      "key_points": ["Uses numpy for efficiency", "Sigmoid activation"],
-      "common_errors": ["Forgetting to transpose matrices"]
+      "content": "...",
+      "domain_type": "formula|algorithm|framework|model|pathway|etc",
+      "components": {{}},
+      "purpose": "...",
+      "context": "...",
+      "example": "..." (optional)
     }}
-  ]
+  ],
+  "detected_domain": "STEM|Science|Social_Science|Humanities|Business|Mixed",
+  "notes": "Any observations about content type"
+}}"""
+
+
+UNIVERSAL_EXAMPLES_APPLICATIONS_PROMPT = """Extract ALL examples, demonstrations, applications, and illustrative content from this lecture.
+
+**AUTONOMOUS DOMAIN ADAPTATION:**
+Identify what constitutes "examples" for THIS specific course domain.
+
+TRANSCRIPT:
+{transcript}
+
+**Domain-Specific Example Types (LLM: extract what's present):**
+
+**STEM (Math/CS/Engineering):**
+- Solved problems with step-by-step solutions
+- Code examples, algorithms, implementations
+- Worked calculations, derivations
+- Design examples, circuit diagrams (verbal descriptions)
+- Case studies of technical systems
+
+**Natural Sciences (Biology/Chemistry/Physics):**
+- Case studies (diseases, reactions, phenomena)
+- Experimental examples with results
+- Real-world applications (drugs, technologies)
+- Species examples, organism behaviors
+- Lab procedure walkthroughs (verbal)
+
+**Social Sciences (Psychology/Sociology/Economics):**
+- Research studies, experiments
+- Real-world case studies
+- Statistical analysis examples
+- Survey results, data interpretations
+- Historical social phenomena
+
+**Humanities (Literature/Philosophy/History):**
+- Textual examples, quotations with analysis
+- Historical events as illustrations
+- Literary passages demonstrating concepts
+- Philosophical thought experiments
+- Comparative examples across periods/cultures
+
+**Business/Management:**
+- Company case studies
+- Market scenarios, business situations
+- Financial analysis examples
+- Strategic decision examples
+- Real-world business applications
+
+**For EACH example extract:**
+1. **type**: What kind of example (solved_problem|case_study|code|experiment|quotation|etc)
+2. **content**: The actual example (preserve details)
+3. **purpose**: What concept/principle this illustrates
+4. **domain**: Subject area
+5. **analysis**: Professor's explanation/interpretation
+6. **key_takeaways**: What students should learn from this example
+
+**CRITICAL:**
+- Extract EVERYTHING used as illustration/demonstration
+- Include professor's analysis/interpretation
+- If no examples → empty list (valid for pure theory lectures)
+- Preserve quotations, data, specifics exactly
+
+Return JSON:
+{{
+  "examples_applications": [
+    {{
+      "type": "case_study|code|solved_problem|experiment|quotation|etc",
+      "content": "...",
+      "purpose": "Illustrates concept X",
+      "domain": "...",
+      "analysis": "Professor's interpretation",
+      "key_takeaways": ["...", "..."]
+    }}
+  ],
+  "total_examples": 0,
+  "example_density": "high|medium|low|none"
 }}"""
 
 
@@ -432,45 +555,64 @@ Mike is waiting for design approval.
 Write standup summary now:"""
 
 
-STUDY_GUIDE_PROMPT = """Create a COMPREHENSIVE STUDY GUIDE from this lecture data.
+UNIVERSAL_STUDY_GUIDE_PROMPT = """Create a COMPREHENSIVE STUDY GUIDE from this lecture data.
+
+**AUTONOMOUS DOMAIN ADAPTATION:**
+Adapt structure and format based on detected course domain. LLM decides optimal organization.
 
 LECTURE DATA (from extractors):
 {extracted_data}
 
-Structure the study guide with these sections:
+**UNIVERSAL STRUCTURE (adapt sections based on content):**
 
 # [Lecture Topic] - Study Guide
 
-## 📚 Key Concepts
-[List all concepts with definitions]
+## 📚 Core Concepts & Definitions
+[ALL key concepts - universal for any course]
 
-## 📐 Formulas & Equations
-[All formulas with variable explanations]
+## 🔬 Structured Knowledge (if present)
+[Domain-adaptive content:]
+- STEM: Formulas, equations, algorithms, code
+- Sciences: Pathways, mechanisms, taxonomies, processes
+- Humanities: Analytical frameworks, literary devices, rhetorical structures
+- Social Sciences: Theoretical models, research methods, frameworks
+- Business: Strategic models, financial frameworks, decision tools
+[Skip section if empty - valid for discussion courses]
 
-## 💻 Code Examples
-[Code snippets with explanations]
+## 💡 Examples & Applications
+[Real-world cases, demonstrations, solved problems, quotations, etc]
 
-## ⚠️ Exam Preparation
-[Flagged topics that "will be on the test"]
+## ⚠️ Exam Preparation Focus
+[Professor emphasis cues, repeated topics, exam-critical material]
 
-## ✅ Practice Problems
-[Any example problems solved in lecture]
+## 📖 Additional Resources (if mentioned)
+[Readings, supplementary materials]
 
-## 📖 Recommended Reading
-[Additional resources mentioned]
-
-## 📝 Homework
-[Assignments with deadlines]
+## 📝 Assignments & Deadlines (if mentioned)
+[Homework, projects, due dates]
 
 ---
 
-FORMAT REQUIREMENTS:
-- Use markdown formatting
-- Include timestamps for complex topics (e.g., "Backpropagation explained at 1:23:45")
-- Highlight exam-critical content with ⚠️ emoji
-- Organize by topic/chapter if lecture covers multiple areas
+**ADAPTIVE FORMATTING:**
+- **STEM/Sciences**: Include step-by-step solutions, notation explanations
+- **Humanities**: Include quotations, textual analysis, interpretive frameworks
+- **Social Sciences**: Include research methodologies, statistical concepts
+- **Business**: Include case analyses, strategic frameworks
 
-Write the study guide now:"""
+**QUALITY REQUIREMENTS:**
+- Use markdown for clarity
+- Include timestamps for complex topics (e.g., "Topic X explained at 23:45")
+- Highlight exam-critical content with ⚠️
+- Organize hierarchically (main topics → sub-topics)
+- **Adapt tone to domain** (technical for STEM, analytical for humanities)
+
+**LLM AUTONOMY:**
+- Decide optimal organization based on content
+- Skip irrelevant sections (no formulas in literature → skip that section)
+- Prioritize what students need for THIS specific course
+- Create scannable, exam-focused structure
+
+Write the comprehensive study guide now:"""
 
 
 # ============================================================================

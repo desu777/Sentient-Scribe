@@ -39,21 +39,42 @@ profile:
   default_node_agent_name_prefix: "Lecture"
 
 metadata:
-  version: "1.0.0"
-  description: "Specialized for educational lectures and university courses"
-  use_case: "Extract concepts, formulas, code examples, exam hints from lectures"
+  version: "2.0.0"
+  description: "UNIVERSAL lecture profile - autonomous adaptation to ALL academic disciplines"
+  use_case: "Extract domain-adaptive content from lectures across STEM, Sciences, Humanities, Social Sciences, Business"
   meeting_type: "lecture"
+
+  supported_domains:
+    - "STEM (Math, Physics, CS, Engineering)"
+    - "Natural Sciences (Biology, Chemistry, Medicine)"
+    - "Social Sciences (Psychology, Sociology, Economics)"
+    - "Humanities (Literature, Philosophy, History, Linguistics)"
+    - "Business & Management"
+    - "Law, Political Science"
+    - "Arts & Design (verbal content)"
+
   recommended_for:
-    - "University lectures"
-    - "Online courses (Coursera, edX, etc)"
-    - "Educational webinars"
-    - "Training sessions"
+    - "University lectures (ALL disciplines)"
+    - "Online courses (Coursera, edX, Khan Academy)"
+    - "Educational webinars and training"
+    - "Professional development seminars"
+
   recommended_duration: "30 minutes - 3 hours"
-  optimal_class_size: "Any (content-focused, not interactive)"
-  extraction_focus:
-    - "Key concepts with definitions"
-    - "Mathematical formulas and equations"
-    - "Code examples and algorithms"
-    - "Exam preparation hints"
-    - "Prerequisites and learning objectives"
-    - "Homework assignments"
+  optimal_class_size: "Any (content-focused)"
+
+  extraction_approach:
+    method: "Autonomous domain detection and adaptive extraction"
+    llm_autonomy: "Full - LLM decides what's important for each domain"
+
+  universal_extraction_categories:
+    - "Core concepts & terminology (universal)"
+    - "Structured knowledge (domain-adaptive: formulas|frameworks|structures)"
+    - "Examples & applications (universal: cases|demos|quotations)"
+    - "Exam preparation cues (universal: professor emphasis)"
+    - "Comprehensive study guide (domain-adaptive format)"
+
+  competitive_advantage:
+    - "Adapts to course domain automatically (not hardcoded)"
+    - "Works for 90%+ university courses (all verbal content)"
+    - "LLM intelligence vs generic templates (Otter.ai)"
+    - "10x larger addressable market vs STEM-only tools"
