@@ -226,7 +226,12 @@ class SystemManagerV2:
             deadlock_detector=self.deadlock_detector,
             recovery_manager=self.recovery_manager
         )
-        
+
+        # Create execution_engine wrapper for backward compatibility
+        # ProfiledSentientAgent expects execution_engine.run_project_flow()
+        self.execution_engine = self._create_execution_engine_adapter()
+        logger.info("✅ ExecutionEngine adapter created (backward compatibility)")
+
         self._current_profile = profile_name
         logger.success(f"✅ Profile '{profile_name}' loaded and system initialized")
     

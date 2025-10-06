@@ -121,8 +121,13 @@ class ReadyNodeHandler(BaseNodeHandler):
         
         if skip_atomization:
             logger.info(f"🚫 ATOMIZATION SKIPPED: Node {node.task_id} - skip_atomization is enabled")
-            
-            # Use hierarchy/depth-based rules instead
+
+            # CRITICAL FIX: Respect node_type set by planner before applying depth rule
+            if node.node_type == NodeType.EXECUTE:
+                logger.info(f"✅ RESPECTING PLANNER: Node {node.task_id} already marked as EXECUTE by planner")
+                return NodeType.EXECUTE
+
+            # Use hierarchy/depth-based rules as fallback (only if node_type not explicitly set)
             max_recursion_depth = context.config.get('max_planning_layer', 5)
             if node.layer >= max_recursion_depth:
                 logger.info(f"🎯 DEPTH RULE APPLIED: Node {node.task_id} at layer {node.layer} >= max_depth {max_recursion_depth} - forcing EXECUTE")

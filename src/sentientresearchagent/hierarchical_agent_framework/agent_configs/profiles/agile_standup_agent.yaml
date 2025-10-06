@@ -1,0 +1,57 @@
+# Agile Standup Agent Profile
+# Specialized for daily standup meetings - development teams
+
+profile:
+  name: "AgileStandupAgent"
+  description: "Optimized for agile daily standup meetings (15-30 min, tactical focus)"
+
+  # Root planner - breaks down meeting processing into phases
+  root_planner_adapter_name: "StandupMeetingPlanner"  # Specialized standup planner
+
+  # Root aggregator - combines all phases into final output
+  root_aggregator_adapter_name: "RootGeneralAggregator"
+
+  # Planners for different task types
+  planner_adapter_names:
+    SEARCH: "EnhancedSearchPlanner"  # For any search sub-tasks
+    WRITE: "EnhancedWritePlanner"  # For deliverable generation planning
+    THINK: "EnhancedThinkPlanner"  # For extraction phase planning
+
+  # Executors - the actual workers
+  executor_adapter_names:
+    SEARCH: "WhisperTranscriber"  # From meeting_agents.py
+    THINK: "StandupActionExtractor"  # Default for THINK tasks
+    WRITE: "StandupSummaryWriter"  # Default for WRITE tasks
+
+  # Task-specific aggregators
+  aggregator_adapter_names:
+    SEARCH: "SearchAggregator"
+    THINK: "ThinkAggregator"  # Combines extraction results
+    WRITE: "WriteAggregator"  # Combines deliverables
+
+  # Fallbacks
+  atomizer_adapter_name: "default_atomizer"
+  aggregator_adapter_name: "default_aggregator"
+  plan_modifier_adapter_name: "PlanModifier"
+
+  default_planner_adapter_name: "GeneralTaskSolver"
+  default_executor_adapter_name: "BasicReasoningExecutor"
+  default_node_agent_name_prefix: "StandupMeeting"
+
+metadata:
+  version: "1.0.0"
+  description: "Specialized for daily agile standup meetings"
+  use_case: "Extract blockers, action items, and accomplishments from dev team standups"
+  meeting_type: "standup"
+  recommended_for:
+    - "Daily standup meetings"
+    - "Dev team tactical meetings"
+    - "Quick status updates (15-30 min)"
+  recommended_duration: "15-30 minutes"
+  optimal_team_size: "5-10 people"
+  extraction_focus:
+    - "Blockers (critical priority)"
+    - "Action items with owners and deadlines"
+    - "Yesterday's accomplishments"
+    - "Today's plans"
+    - "Team velocity signals"

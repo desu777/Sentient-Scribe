@@ -29,7 +29,7 @@ agents:
     description: "Specialized planner optimized for search-focused research tasks with date awareness and parallel execution"
     model:
       provider: "litellm"
-      model_id: "openrouter/anthropic/claude-sonnet-4"  # Switched from slow o3 model for 10x faster planning
+      model_id: "openrouter/anthropic/claude-sonnet-4.5"  # Switched from slow o3 model for 10x faster planning
       temperature: 0.35      
     # agno_params:
     #   reasoning: true
@@ -48,7 +48,7 @@ agents:
     description: "Specialized planner optimized for search-focused research tasks with date awareness and parallel execution"
     model:
       provider: "litellm"
-      model_id: "openrouter/anthropic/claude-sonnet-4"  # Switched from slow o3 model for 10x faster planning
+      model_id: "openrouter/anthropic/claude-sonnet-4.5"  # Switched from slow o3 model for 10x faster planning
       temperature: 0.35
     # agno_params:
     #   reasoning: true
@@ -68,7 +68,7 @@ agents:
     description: "Specialized planner optimized for search-focused research tasks with date awareness and parallel execution"
     model:
       provider: "litellm"
-      model_id: "openrouter/anthropic/claude-sonnet-4"  # Switched from slow o3 model for 10x faster planning
+      model_id: "openrouter/anthropic/claude-sonnet-4.5"  # Switched from slow o3 model for 10x faster planning
       temperature: 0.35
       # temperature: 0.7
     # agno_params:
@@ -89,7 +89,7 @@ agents:
     description: "Master planner specialized in high-level research project decomposition and strategy"
     model:
       provider: "litellm"
-      model_id: "openrouter/anthropic/claude-sonnet-4"  # Switched from slow o3 model for 10x faster planning
+      model_id: "openrouter/anthropic/claude-sonnet-4.5"  # Switched from slow o3 model for 10x faster planning
       temperature: 0.35
       # temperature: 0.7
     prompt_source: "prompts.planner_prompts.DEEP_RESEARCH_PLANNER_SYSTEM_MESSAGE"
@@ -107,7 +107,7 @@ agents:
     description: "Master planner specialized in high-level research project decomposition and strategy"
     model:
       provider: "litellm"
-      model_id: "openrouter/anthropic/claude-sonnet-4"  # Switched from slow o3 model for 10x faster planning
+      model_id: "openrouter/anthropic/claude-sonnet-4.5"  # Switched from slow o3 model for 10x faster planning
       temperature: 0.3
     # agno_params:
     #   reasoning: true
@@ -119,6 +119,23 @@ agents:
         - action_verb: "plan"
           task_type: "WRITE"
       named_keys: ["GeneralTaskSolver"]
+    enabled: true
+
+  - name: "StandupMeetingPlanner"
+    type: "planner"
+    adapter_class: "PlannerAdapter"
+    description: "Specialized ROOT planner for Agile standup meetings - generates 3-phase plan: transcribe, extract, generate"
+    model:
+      provider: "litellm"
+      model_id: "openrouter/anthropic/claude-sonnet-4.5"
+      temperature: 0.3
+    prompt_source: "prompts.meeting_prompts.STANDUP_MEETING_PLANNER_PROMPT"
+    response_model: "PlanOutput"
+    registration:
+      action_keys:
+        - action_verb: "plan"
+          task_type: "WRITE"
+      named_keys: ["StandupMeetingPlanner", "standup_planner"]
     enabled: true
 
   # =============================================================================
@@ -200,6 +217,17 @@ agents:
   # CUSTOM SEARCH AGENTS - Direct API-based search without LLM overhead
   # =============================================================================
 
+  - name: "WhisperTranscriber"
+    type: "executor"
+    adapter_class: "WhisperTranscriptionAdapter"
+    description: "Production-ready audio transcription using OpenAI Whisper API"
+    registration:
+      action_keys:
+        - action_verb: "execute"
+          task_type: "SEARCH"
+      named_keys: ["WhisperTranscriber", "whisper_transcriber", "transcription"]
+    enabled: true
+
   - name: "OpenAICustomSearcher"
     type: "custom_search"
     adapter_class: "OpenAICustomSearchAdapter"
@@ -222,7 +250,7 @@ agents:
     adapter_class: "GeminiCustomSearchAdapter"
     description: "Direct API-based search using Google Gemini's search capabilities"
     adapter_params:
-      model_id: "gemini-2.5-flash"
+      model_id: "openrouter/google/gemini-2.5-pro"
     registration:
       action_keys:
         - action_verb: "execute"
@@ -363,7 +391,7 @@ agents:
     description: "Specialized planner for cryptocurrency and DeFi analytics with deep domain expertise"
     model:
       provider: "litellm"
-      model_id: "openrouter/google/gemini-2.5-flash:nitro"  # Switched from slow o3 model for 10x faster planning
+      model_id: "openrouter/google/gemini-2.5-pro"  # Switched from slow o3 model for 10x faster planning
       temperature: 0.35
     # agno_params:
     #   reasoning: true
@@ -374,7 +402,7 @@ agents:
         - action_verb: "plan"
           task_type: "WRITE"
       named_keys: ["CryptoAnalyticsPlanner", "crypto_planner"]
-    enabled: true
+    enabled: false  # Not needed for MeetingGenius
 
   - name: "CryptoSearchPlanner"
     type: "planner"
@@ -382,7 +410,7 @@ agents:
     description: "Specialized planner for crypto-specific search tasks optimized for blockchain data retrieval"
     model:
       provider: "litellm"
-      model_id: "openrouter/google/gemini-2.5-flash:nitro"  # Switched from slow o3 model for 10x faster planning
+      model_id: "openrouter/google/gemini-2.5-pro"  # Switched from slow o3 model for 10x faster planning
       temperature: 0.35
     # agno_params:
     #   reasoning: true
@@ -393,7 +421,7 @@ agents:
         - action_verb: "plan"
           task_type: "SEARCH"
       named_keys: ["CryptoSearchPlanner", "crypto_search_planner"]
-    enabled: true
+    enabled: false  # Not needed for MeetingGenius
 
   - name: "CryptoMarketAnalyzer"
     type: "executor"
@@ -402,7 +430,7 @@ agents:
     model:
       provider: "litellm"
       # model_id: "openrouter/deepseek/deepseek-r1-0528:nitro"  # Switched from slow o3 model for faster analysis
-      model_id: "openrouter/anthropic/claude-sonnet-4"
+      model_id: "openrouter/anthropic/claude-sonnet-4.5"
     # agno_params:
     #   reasoning: true
     prompt_source: "prompts.executor_prompts.CRYPTO_MARKET_ANALYZER_SYSTEM_MESSAGE"
@@ -480,7 +508,7 @@ agents:
         - action_verb: "execute"
           task_type: "THINK"
       named_keys: ["CryptoMarketAnalyzer", "crypto_analyzer"]
-    enabled: true
+    enabled: false  # Not needed for MeetingGenius
 
   - name: "CryptoResearchExecutor"
     type: "executor"
@@ -488,7 +516,7 @@ agents:
     description: "Comprehensive crypto research executor for deep blockchain and DeFi analysis"
     model:
       provider: "litellm"
-      model_id: "openrouter/google/gemini-2.5-flash:nitro" 
+      model_id: "openrouter/google/gemini-2.5-pro" 
     # agno_params:
     #   reasoning: true
     prompt_source: "prompts.executor_prompts.CRYPTO_RESEARCH_EXECUTOR_SYSTEM_MESSAGE"
@@ -497,7 +525,7 @@ agents:
         - action_verb: "execute"
           task_type: "WRITE"
       named_keys: ["CryptoResearchExecutor", "crypto_writer"]
-    enabled: true
+    enabled: false  # Not needed for MeetingGenius
 
   - name: "CryptoAnalyticsAggregator"
     type: "aggregator"
@@ -505,7 +533,7 @@ agents:
     description: "Specialized aggregator for crypto data synthesis and market insights"
     model:
       provider: "litellm"
-      model_id: "openrouter/google/gemini-2.5-flash:nitro"
+      model_id: "openrouter/google/gemini-2.5-pro"
     # agno_params:
     #   reasoning: true
     prompt_source: "prompts.aggregator_prompts.CRYPTO_ANALYTICS_AGGREGATOR_SYSTEM_MESSAGE"
@@ -519,7 +547,7 @@ agents:
     description: "Master aggregator for executive-level crypto research synthesis and strategic insights"
     model:
       provider: "litellm"
-      model_id: "openrouter/google/gemini-2.5-flash:nitro"
+      model_id: "openrouter/google/gemini-2.5-pro"
     # agno_params:
     #   reasoning: true
     prompt_source: "prompts.aggregator_prompts.CRYPTO_ROOT_AGGREGATOR_SYSTEM_MESSAGE"
@@ -537,7 +565,7 @@ agents:
     description: "Determines if tasks are atomic or need further planning"
     model:
       provider: "litellm"
-      model_id: "openrouter/google/gemini-2.5-flash"
+      model_id: "openrouter/google/gemini-2.5-pro"
     prompt_source: "prompts.atomizer_prompts.ATOMIZER_SYSTEM_MESSAGE"
     response_model: "AtomizerOutput"
     registration:
@@ -557,7 +585,7 @@ agents:
     description: "Modifies existing plans based on user feedback"
     model:
       provider: "litellm"
-      model_id: "openrouter/anthropic/claude-sonnet-4"  # Switched from slow o3 model for 10x faster planning
+      model_id: "openrouter/anthropic/claude-sonnet-4.5"  # Switched from slow o3 model for 10x faster planning
     # agno_params:
     # temperature: 0.7
     prompt_source: "prompts.plan_modifier_prompts.PLAN_MODIFIER_SYSTEM_PROMPT"

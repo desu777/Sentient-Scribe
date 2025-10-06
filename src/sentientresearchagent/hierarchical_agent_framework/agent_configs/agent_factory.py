@@ -37,11 +37,17 @@ except ImportError:
     WIKIPEDIA_AVAILABLE = False
 
 from ..agents.adapters import (
-    PlannerAdapter, ExecutorAdapter, AtomizerAdapter, 
+    PlannerAdapter, ExecutorAdapter, AtomizerAdapter,
     AggregatorAdapter, PlanModifierAdapter
 )
 from ..agents.definitions.custom_searchers import OpenAICustomSearchAdapter, GeminiCustomSearchAdapter
 from ..agents.definitions.exa_searcher import ExaCustomSearchAdapter
+from ..agents.definitions.meeting_agents import (
+    WhisperTranscriptionAdapter,
+    StandupActionExtractor,
+    StandupBlockerExtractor,
+    StandupSummaryWriter
+)
 from sentientresearchagent.hierarchical_agent_framework.context.agent_io_models import (
     PlanOutput, AtomizerOutput, WebSearchResultsOutput, 
     CustomSearcherOutput, PlanModifierInput
@@ -58,8 +64,32 @@ from .models import (
 
 try:
     from dotenv import load_dotenv
+    import os
+
     # Load .env file at module level to ensure environment variables are available
     load_dotenv()
+
+    # PRODUCTION FIX: Strip trailing whitespace/newlines from all API keys
+    # Defensive programming - .env files may have Windows line endings (\r\n)
+    # This prevents "Newline or carriage return in headers" HTTP errors
+    _api_keys_to_clean = [
+        'OPENAI_API_KEY', 'OPENROUTER_API_KEY', 'ANTHROPIC_API_KEY',
+        'GOOGLE_API_KEY', 'GEMINI_API_KEY', 'EXA_API_KEY', 'E2B_API_KEY',
+        'BINANCE_API_KEY', 'COINGECKO_API_KEY', 'ARKHAM_API_KEY'
+    ]
+
+    _cleaned_count = 0
+    for key in _api_keys_to_clean:
+        value = os.getenv(key)
+        if value:
+            cleaned = value.strip()
+            if cleaned != value:
+                os.environ[key] = cleaned
+                _cleaned_count += 1
+
+    if _cleaned_count > 0:
+        logger.info(f"✅ Cleaned {_cleaned_count} API key(s) - removed trailing whitespace")
+
     logger.debug("Loaded environment variables from .env file")
 except ImportError:
     logger.warning("python-dotenv not installed. Environment variables from .env files will not be loaded automatically.")
@@ -87,6 +117,10 @@ class AgentFactory:
             "OpenAICustomSearchAdapter": OpenAICustomSearchAdapter,
             "GeminiCustomSearchAdapter": GeminiCustomSearchAdapter,
             "ExaCustomSearchAdapter": ExaCustomSearchAdapter,
+            "WhisperTranscriptionAdapter": WhisperTranscriptionAdapter,
+            "StandupActionExtractor": StandupActionExtractor,
+            "StandupBlockerExtractor": StandupBlockerExtractor,
+            "StandupSummaryWriter": StandupSummaryWriter,
         }
         
         # Enhanced response models mapping
@@ -608,10 +642,15 @@ class AgentFactory:
         Returns:
             AgnoAgent instance or None for agents that don't use AgnoAgent
         """
-        # Some agents (like custom search adapters) don't use AgnoAgent
+        # Some agents (like custom search adapters and meeting adapters) don't use AgnoAgent
         adapter_class_name = agent_config.get("adapter_class", "")
-        if adapter_class_name in ["OpenAICustomSearchAdapter", "GeminiCustomSearchAdapter", "ExaCustomSearchAdapter"]:
-            logger.debug(f"Agent {agent_config.name} doesn't use AgnoAgent (custom search adapter)")
+        custom_adapters_without_agno = [
+            "OpenAICustomSearchAdapter", "GeminiCustomSearchAdapter", "ExaCustomSearchAdapter",
+            "WhisperTranscriptionAdapter", "StandupActionExtractor",
+            "StandupBlockerExtractor", "StandupSummaryWriter"
+        ]
+        if adapter_class_name in custom_adapters_without_agno:
+            logger.debug(f"Agent {agent_config.name} doesn't use AgnoAgent (custom adapter: {adapter_class_name})")
             return None
         
         if "model" not in agent_config or "prompt_source" not in agent_config:
@@ -706,18 +745,24 @@ class AgentFactory:
         
         try:
             # Special handling for different adapter types
-            if adapter_class_name in ["OpenAICustomSearchAdapter", "GeminiCustomSearchAdapter", "ExaCustomSearchAdapter"]:
+            custom_adapters = [
+                "OpenAICustomSearchAdapter", "GeminiCustomSearchAdapter", "ExaCustomSearchAdapter",
+                "WhisperTranscriptionAdapter", "StandupActionExtractor",
+                "StandupBlockerExtractor", "StandupSummaryWriter"
+            ]
+
+            if adapter_class_name in custom_adapters:
                 # These adapters don't use AgnoAgent and have special initialization
                 adapter_kwargs = {}
-                
+
                 # Check if there are custom parameters for this adapter
                 if "adapter_params" in agent_config and agent_config.adapter_params is not None:
                     adapter_kwargs.update(dict(agent_config.adapter_params))
-                
+
                 # Override model_id if specified in config
                 if "model" in agent_config and agent_config.model is not None and "model_id" in agent_config.model:
                     adapter_kwargs["model_id"] = agent_config.model.model_id
-                
+
                 return adapter_class(**adapter_kwargs)
                 
             else:

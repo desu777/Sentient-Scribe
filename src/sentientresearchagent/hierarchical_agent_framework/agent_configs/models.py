@@ -629,7 +629,9 @@ class AgentConfig(BaseModel):
             "PlannerAdapter", "ExecutorAdapter", "AtomizerAdapter",
             "AggregatorAdapter", "PlanModifierAdapter",
             "OpenAICustomSearchAdapter", "GeminiCustomSearchAdapter",
-            "ExaCustomSearchAdapter"
+            "ExaCustomSearchAdapter",
+            "WhisperTranscriptionAdapter", "StandupActionExtractor",
+            "StandupBlockerExtractor", "StandupSummaryWriter"
         ]
         if v not in valid_adapters:
             raise ValueError(f"Invalid adapter class: {v}. Must be one of {valid_adapters}")
@@ -662,7 +664,8 @@ class AgentConfig(BaseModel):
         # Validate adapter matches agent type
         type_adapter_map = {
             "planner": ["PlannerAdapter"],
-            "executor": ["ExecutorAdapter"],
+            "executor": ["ExecutorAdapter", "WhisperTranscriptionAdapter", "StandupActionExtractor",
+                        "StandupBlockerExtractor", "StandupSummaryWriter"],
             "aggregator": ["AggregatorAdapter"],
             "atomizer": ["AtomizerAdapter"],
             "plan_modifier": ["PlanModifierAdapter"],
@@ -676,11 +679,15 @@ class AgentConfig(BaseModel):
                 f"Valid adapters: {valid_adapters}"
             )
         
-        # Validate custom search agents don't have model/prompt_source
-        if agent_type == "custom_search":
+        # Validate custom search agents and meeting adapters don't have model/prompt_source
+        custom_adapters_without_model = [
+            "OpenAICustomSearchAdapter", "GeminiCustomSearchAdapter", "ExaCustomSearchAdapter",
+            "WhisperTranscriptionAdapter"
+        ]
+        if agent_type == "custom_search" or adapter_class in custom_adapters_without_model:
             if self.model or self.prompt_source:
                 raise ValueError(
-                    "Custom search agents should not have 'model' or 'prompt_source' fields"
+                    f"Agent '{self.name}' with adapter '{adapter_class}' should not have 'model' or 'prompt_source' fields"
                 )
         else:
             # Non-custom search agents should have model and prompt_source

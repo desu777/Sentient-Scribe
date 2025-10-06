@@ -26,17 +26,21 @@ Standups are SHORT (15-30 min), TACTICAL meetings where:
 - Focus is on IMMEDIATE actions and removing obstacles
 - NOT strategic planning (that's for sprint planning)
 
-Break this into a 3-phase MECE plan:
+Break this into 6 ATOMIC tasks (ALL are EXECUTE nodes, NO further planning):
 
-PHASE 1 (SEARCH): Transcribe audio to text
-PHASE 2 (THINK): Extract standup-specific data in PARALLEL:
-  - Blockers (anything preventing progress - HIGH PRIORITY)
-  - Action items (concrete tasks with owners and deadlines)
-  - Yesterday's accomplishments (per person)
-  - Today's plans (per person)
-PHASE 3 (WRITE): Generate standup deliverables
+1. Transcribe audio to text (SEARCH, EXECUTE)
+2. Extract blockers (THINK, EXECUTE, depends_on: [0])
+3. Extract action items (THINK, EXECUTE, depends_on: [0])
+4. Extract accomplishments (THINK, EXECUTE, depends_on: [0])
+5. Extract today's plans (THINK, EXECUTE, depends_on: [0])
+6. Generate summary (WRITE, EXECUTE, depends_on: [1,2,3,4])
 
-Return JSON plan with sub_tasks array."""
+CRITICAL: Each sub_task MUST have:
+- "task_type": "SEARCH" | "THINK" | "WRITE"
+- "node_type": "EXECUTE"  ← MANDATORY for ALL tasks!
+- "depends_on_indices": [...]
+
+Return JSON plan with sub_tasks array following SubTask schema."""
 
 
 STANDUP_ACTION_PROMPT = """You are an expert at extracting action items from Agile standup meetings.
