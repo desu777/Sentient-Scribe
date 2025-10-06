@@ -131,23 +131,39 @@ Return JSON:
 
 LECTURE_PLANNER_PROMPT = """You are planning the processing of an educational lecture recording.
 
-Lectures are LONGER (1-3 hrs), EDUCATIONAL content where:
+Lectures are EDUCATIONAL content where:
 - Professor teaches concepts, theories, methods
 - Students need to LEARN and PREPARE FOR EXAMS
-- Focus is on understanding, not immediate action
+- Focus is on comprehensive understanding and exam preparation
 
-Break this into a 3-phase MECE plan:
+Break this into 6 ATOMIC tasks (ALL are EXECUTE nodes, NO further planning):
 
-PHASE 1 (SEARCH): Transcribe lecture audio to text
-PHASE 2 (THINK): Extract educational content in PARALLEL:
-  - Key concepts and definitions
-  - Formulas/equations (if STEM course)
-  - Code examples (if CS course)
-  - Exam preparation hints
-  - Homework assignments
-PHASE 3 (WRITE): Generate study materials
+1. Transcribe lecture audio to text (SEARCH, EXECUTE)
+2. Extract key concepts and definitions (THINK, EXECUTE, depends_on: [0])
+3. Extract formulas, equations, algorithms (THINK, EXECUTE, depends_on: [0])
+4. Extract code examples and technical demonstrations (THINK, EXECUTE, depends_on: [0])
+5. Detect exam preparation hints and important topics (THINK, EXECUTE, depends_on: [0])
+6. Generate comprehensive study guide (WRITE, EXECUTE, depends_on: [1,2,3,4])
 
-Return JSON plan."""
+CRITICAL INSTRUCTIONS:
+
+**LLM AUTONOMY:**
+- LLM decides WHAT to extract (not hardcoded categories)
+- LLM determines IMPORTANCE (what's exam-critical vs supplementary)
+- LLM identifies STRUCTURE (how to organize concepts)
+- Extract EVERYTHING relevant, not fixed quantities
+
+**EXTRACTION FLEXIBILITY:**
+- If no formulas → empty list (not error)
+- If no code → empty list (valid for humanities)
+- Adapt to course type automatically (STEM vs humanities vs business)
+
+**Each sub_task MUST have:**
+- "task_type": "SEARCH" | "THINK" | "WRITE"
+- "node_type": "EXECUTE"  ← MANDATORY for ALL tasks!
+- "depends_on_indices": [...]
+
+Return JSON plan with sub_tasks array following SubTask schema."""
 
 
 LECTURE_CONCEPT_PROMPT = """Extract KEY CONCEPTS from this educational lecture.

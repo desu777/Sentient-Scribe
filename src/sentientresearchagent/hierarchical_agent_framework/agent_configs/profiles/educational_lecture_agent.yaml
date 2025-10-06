@@ -1,0 +1,59 @@
+# Educational Lecture Agent Profile
+# Specialized for university lectures and educational content
+
+profile:
+  name: "EducationalLectureAgent"
+  description: "Optimized for educational lectures (1-3 hrs, comprehensive learning focus)"
+
+  # Root planner - breaks down lecture processing into phases
+  root_planner_adapter_name: "LecturePlanner"  # Specialized lecture planner
+
+  # Root aggregator - combines all phases into final study guide
+  root_aggregator_adapter_name: "RootGeneralAggregator"
+
+  # Planners for different task types
+  planner_adapter_names:
+    SEARCH: "EnhancedSearchPlanner"  # For any search sub-tasks
+    WRITE: "EnhancedWritePlanner"  # For study guide generation planning
+    THINK: "EnhancedThinkPlanner"  # For extraction phase planning
+
+  # Executors - the actual workers
+  executor_adapter_names:
+    SEARCH: "WhisperTranscriber"  # Re-use from standup (same transcription)
+    THINK: "BasicReasoningExecutor"  # General-purpose extractor (LLM autonomy)
+    WRITE: "BasicReportWriter"  # General-purpose writer
+
+  # Task-specific aggregators
+  aggregator_adapter_names:
+    SEARCH: "SearchAggregator"
+    THINK: "ThinkAggregator"  # Combines extraction results
+    WRITE: "WriteAggregator"  # Combines study materials
+
+  # Fallbacks
+  atomizer_adapter_name: "default_atomizer"
+  aggregator_adapter_name: "default_aggregator"
+  plan_modifier_adapter_name: "PlanModifier"
+
+  default_planner_adapter_name: "LecturePlanner"
+  default_executor_adapter_name: "BasicReasoningExecutor"
+  default_node_agent_name_prefix: "Lecture"
+
+metadata:
+  version: "1.0.0"
+  description: "Specialized for educational lectures and university courses"
+  use_case: "Extract concepts, formulas, code examples, exam hints from lectures"
+  meeting_type: "lecture"
+  recommended_for:
+    - "University lectures"
+    - "Online courses (Coursera, edX, etc)"
+    - "Educational webinars"
+    - "Training sessions"
+  recommended_duration: "30 minutes - 3 hours"
+  optimal_class_size: "Any (content-focused, not interactive)"
+  extraction_focus:
+    - "Key concepts with definitions"
+    - "Mathematical formulas and equations"
+    - "Code examples and algorithms"
+    - "Exam preparation hints"
+    - "Prerequisites and learning objectives"
+    - "Homework assignments"

@@ -138,6 +138,23 @@ agents:
       named_keys: ["StandupMeetingPlanner", "standup_planner"]
     enabled: true
 
+  - name: "LecturePlanner"
+    type: "planner"
+    adapter_class: "PlannerAdapter"
+    description: "Specialized ROOT planner for educational lectures - autonomous extraction of concepts, formulas, code examples"
+    model:
+      provider: "litellm"
+      model_id: "openrouter/anthropic/claude-sonnet-4.5"
+      temperature: 0.3
+    prompt_source: "prompts.meeting_prompts.LECTURE_PLANNER_PROMPT"
+    response_model: "PlanOutput"
+    registration:
+      action_keys:
+        - action_verb: "plan"
+          task_type: "WRITE"
+      named_keys: ["LecturePlanner", "lecture_planner"]
+    enabled: true
+
   # =============================================================================
   # EXECUTOR AGENTS - Execute atomic tasks (search, write, think)
   # =============================================================================
